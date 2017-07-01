@@ -21,23 +21,24 @@ public class STM2IR {
     /**
      * Stores the strings to be written to the output file.
      */
-    private static LinkedList<String> list = new LinkedList<>();
+    private static final LinkedList<String> LIST = new LinkedList<>();
     /**
      * Counter for temporary variables of LLVM.
      */
     private static int tempCounter = 0;
 
     /**
-     * Read lines from input file, processes them and prints the LLVM code to output file.
+     * Read lines from input file, processes them and prints the LLVM code to
+     * output file.
      *
      * @param args path for input file
      * @throws FileNotFoundException if input file is not found
      */
     public static void main(String[] args) throws FileNotFoundException {
-        list.add("; ModuleID = 'stm2ir'");
-        list.add("declare i32 @printf(i8*, ...)");
-        list.add("@print.str = constant [4 x i8] c\"%d\\0A\\00\"");
-        list.add("define i32 @main() {");
+        LIST.add("; ModuleID = 'stm2ir'");
+        LIST.add("declare i32 @printf(i8*, ...)");
+        LIST.add("@print.str = constant [4 x i8] c\"%d\\0A\\00\"");
+        LIST.add("define i32 @main() {");
         Scanner input = new Scanner(new File(args[0]));
         while (input.hasNextLine()) {
             lineCounter++;
@@ -46,20 +47,20 @@ public class STM2IR {
                 String left = line.split("=")[0], right = line.split("=")[1];
                 if (!VARIABLES.contains(left)) {
                     VARIABLES.add(left);
-                    list.add("%" + left + " = alloca i32");
+                    LIST.add("%" + left + " = alloca i32");
                 }
-                list.add("store i32 " + findVariable(expression(right)) + ", i32* %" + left);
+                LIST.add("store i32 " + findVariable(expression(right)) + ", i32* %" + left);
             }
             else {
-                list.add("call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " + findVariable(expression(line)) + " )");
+                LIST.add("call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " + findVariable(expression(line)) + " )");
                 tempCounter++;
             }
         }
         input.close();
-        list.add("ret i32 0");
-        list.add("}");
+        LIST.add("ret i32 0");
+        LIST.add("}");
         PrintStream printStream = new PrintStream(args[0].split("\\.")[0] + ".ll");
-        for (ListIterator<String> iterator = list.listIterator(); iterator.hasNext();) {
+        for (ListIterator<String> iterator = LIST.listIterator(); iterator.hasNext();) {
             printStream.println(iterator.next());
         }
         printStream.close();
@@ -94,9 +95,10 @@ public class STM2IR {
     }
 
     /**
-     * Processes all operations for all operators in a given string. First removes all parenthesis
-     * then processes the operations according to the operator precedence. All operations of a type
-     * are finished before the next operation type is executed.
+     * Processes all operations for all operators in a given string. First
+     * removes all parenthesis then processes the operations according to the
+     * operator precedence. All operations of a type are finished before the
+     * next operation type is executed.
      *
      * @param expression string containing variables and operators
      * @return processed string
@@ -117,8 +119,9 @@ public class STM2IR {
     }
 
     /**
-     * Checks whether given string is a number or variable. If it is a number then returns it. If it
-     * is a variable first checks for errors then returns it as a temp variable.
+     * Checks whether given string is a number or variable. If it is a number
+     * then returns it. If it is a variable first checks for errors then returns
+     * it as a temp variable.
      *
      * @param expression string consisting of number or temp variable
      * @return number of temp variable of LLVM
@@ -133,7 +136,7 @@ public class STM2IR {
                     String original = expression;
                     expression = "%" + ++tempCounter;
                     VARIABLES.add(expression);
-                    list.add(expression + " = load i32* %" + original);
+                    LIST.add(expression + " = load i32* %" + original);
                 }
             }
             else {
@@ -145,9 +148,10 @@ public class STM2IR {
     }
 
     /**
-     * Processes all operations for a given operator in a given string. First extracts the left and
-     * right operands then checks for errors then does the operation and changes the string for this
-     * operation then returns this string.
+     * Processes all operations for a given operator in a given string. First
+     * extracts the left and right operands then checks for errors then does the
+     * operation and changes the string for this operation then returns this
+     * string.
      *
      * @param expression string containing variables and operators
      * @param operator operator type
@@ -182,7 +186,7 @@ public class STM2IR {
             String left = expression.substring(leftBegin, leftEnd + 1), right = expression.substring(rightBegin, rightEnd + 1);
             String tempLeft = findVariable(left), tempRight = findVariable(right), temp = "%" + ++tempCounter;
             VARIABLES.add(temp);
-            list.add(temp + " = " + type + " i32 " + tempLeft + "," + tempRight);
+            LIST.add(temp + " = " + type + " i32 " + tempLeft + "," + tempRight);
             expression = expression.replace(left + operator + right, temp);
         }
         return expression;
