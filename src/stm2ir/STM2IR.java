@@ -3,6 +3,7 @@ package stm2ir;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Scanner;
@@ -33,13 +34,15 @@ public class STM2IR {
      *
      * @param args path for input file
      * @throws FileNotFoundException if input file is not found
+     * @throws UnsupportedEncodingException if the named charset is not
+     * supported
      */
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
         LIST.add("; ModuleID = 'stm2ir'");
         LIST.add("declare i32 @printf(i8*, ...)");
         LIST.add("@print.str = constant [4 x i8] c\"%d\\0A\\00\"");
         LIST.add("define i32 @main() {");
-        Scanner input = new Scanner(new File(args[0]));
+        Scanner input = new Scanner(new File(args[0]), "UTF-8");
         while (input.hasNextLine()) {
             lineCounter++;
             String line = input.nextLine().replaceAll("\\s+", "");
@@ -59,7 +62,7 @@ public class STM2IR {
         input.close();
         LIST.add("ret i32 0");
         LIST.add("}");
-        PrintStream printStream = new PrintStream(args[0].split("\\.")[0] + ".ll");
+        PrintStream printStream = new PrintStream(args[0].split("\\.")[0] + ".ll", "UTF-8");
         for (ListIterator<String> iterator = LIST.listIterator(); iterator.hasNext();) {
             printStream.println(iterator.next());
         }
@@ -105,7 +108,7 @@ public class STM2IR {
      */
     private static String expression(String expression) {
         while (expression.contains("(") || expression.contains(")")) {
-            int begin = expression.lastIndexOf("("), end = expression.indexOf(")", begin);
+            int begin = expression.lastIndexOf('('), end = expression.indexOf(')', begin);
             errorMissingParanthesis(begin, "left");
             errorMissingParanthesis(end, "right");
             String inside = expression.substring(begin + 1, end);
